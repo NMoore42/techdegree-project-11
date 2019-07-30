@@ -1,11 +1,25 @@
-function requiresLogin(req, res, next) {
-  if (req.session && req.session.userId) {
-    return next();
-  } else {
-    var err = new Error('You are not currently logged in!');
-    err.status = 401;
-    return next(err);
-  }
-}
+const auth = require('basic-auth');
+const User = require('../models/user');
 
-module.exports.requiresLogin = requiresLogin;
+const authenticateUser = (req, res, next) => {
+  const credentials = auth(req);
+  if (credentials) {
+    User.authenticate(req.body.emailAddress, req.body.password, (error, user) => {
+      if (error || !user) {
+        const err = new Error('Wrong password.');
+        err.status = 401;
+        return next(err);
+      } else {
+        req.currentUser = user;
+        return next();
+      }
+    });
+  } else {
+    const err = new Error('Auth header not found');
+		err.status = 401;
+		return next(err);
+  }
+};
+
+
+module.exports.authenticateUser = authenticateUser;
