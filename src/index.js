@@ -3,6 +3,8 @@
 // load modules
 const express = require('express');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
+const bodyParser = require("body-parser");
 
 const app = express();
 
@@ -12,7 +14,19 @@ app.set('port', process.env.PORT || 5000);
 // morgan gives us http request logging
 app.use(morgan('dev'));
 
-// TODO add additional routes here
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// include routes
+const routes = require('./routes/index');
+app.use('/api', routes);
+
+//Mongoose connection
+mongoose.connect("mongodb://localhost:27017/course-api");
+const db = mongoose.connection;
+
+//Mongoose error
+db.on('error', console.error.bind(console, 'connection error:'));
 
 // send a friendly greeting for the root route
 app.get('/', (req, res) => {
@@ -20,6 +34,7 @@ app.get('/', (req, res) => {
     message: 'Welcome to the Course Review API'
   });
 });
+
 
 // uncomment this route in order to test the global error handler
 // app.get('/error', function (req, res) {
