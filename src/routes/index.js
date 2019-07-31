@@ -5,6 +5,7 @@ const Course = require('../models/course');
 const Review = require('../models/review');
 const mid = require('../middleware');
 
+
 ///////////////////
 /// USER ROUTES///
 /////////////////
@@ -12,39 +13,25 @@ const mid = require('../middleware');
 // GET /users
 router.get('/users', mid.authenticateUser, function(req, res, next) {
   res.status(200)
-  return res.send(req.currentUser);
+  return res.send(req.currentUser)
 });
 
 
 // POST /users
 router.post('/users', (req, res, next) => {
-  if (req.body.emailAddress && req.body.fullName && req.body.password) {
-      // Create object with form inputs
-      const userData = {
-        emailAddress: req.body.emailAddress,
-        password: req.body.password,
-        fullName: req.body.fullName
-      };
-
-      //User schema's create method to insert into db
-      User.create(userData, (error, user) => {
-        if (error) {
-          return next(error);
-        } else {
-          //req.session.userId = user._id;
-          res.status(201);
-          res.location("/");
-          res.json({
-              response: "Post Request Successful"
-          });
-        }
-      });
-
+  const user = new User(req.body)
+  user.save( err => {
+    if (err) {
+      err.status = 400
+      return next(err)
     } else {
-      const err = new Error('Email, Password, and Name are required!');
-      err.status = 400;
-      return next(err);
+      res.status(201)
+      res.location('/')
+      res.json({
+          response: "Post Request Successful"
+      })
     }
+  })
 });
 
 
@@ -54,14 +41,104 @@ router.post('/users', (req, res, next) => {
 
 //GET /courses
 router.get('/courses', (req, res, next) => {
-    Course.find({}, {title: true}, (err, courses) => {
+  Course.find({}, {title: true}, (err, courses) => {
+    if (err) {
+      err.status = 400
+      return next(err)
+    } else {
+      res.status(200)
+      res.json(courses)
+    }
+  })
+});
+
+//GET /courses/:courseId
+router.get('/courses/:courseId', (req, res, next) => {
+  Course.findOne({ _id: req.params.courseId})
+    .populate('reviews')
+    .populate('user')
+    .exec( (err, course) => {
       if (err) {
-        return next(err);
+        err.status = 400
+        return next(err)
       } else {
-        res.json(courses)
+        res.status(200)
+        res.json(course)
       }
     })
 });
+
+//POST /courses
+router.post('/courses', mid.authenticateUser, (req, res, next) => {
+  const course = new Course(req.body);
+  course.save( err => {
+    if (err) {
+      err.status = 400
+      return next(err)
+    } else {
+      res.status(201)
+      res.location('/')
+      res.json({
+          response: "Post Request Successful"
+      })
+    }
+  })
+})
+
+//PUT /courses/:courseId
+router.put('/courses/:courseId', mid.authenticateUser, (req, res, next) => {
+  Course.findOne({ _id: req.params.courseId})
+    .update(req.body)
+    .exec( (err, course) => {
+      if (err) {
+        err.status = 400
+        return next(err)
+      } else {
+        res.status(204)
+        res.json({
+            response: "Patch Request Successful"
+        })
+      }
+    })
+});
+
+
+///////////////////////
+/// REVIEWS ROUTES ///
+/////////////////////
+
+//POST /courses/:courseId/reviews
+router.post('/courses/:courseId/reviews', mid.authenticateUser, (req, res, next) => {
+  Course.findOne({ _id: req.params.courseId})
+    .exec( (err, course) => {
+      if (err) {
+        err.status = 400
+        return next(err)
+      } else {
+        const review = new Review(req.body);
+        review.save( err => {
+          if (err) {
+            err.status = 400
+            return next(err)
+          } else {
+            course.reviews.push(review)
+            course.save( err => {
+              if (err) {
+                err.status = 400
+                return next(err)
+              } else {
+                res.status(201)
+                res.location('/')
+                res.json({
+                    response: "Post Request Successful"
+                })
+              }
+            })
+          }
+        })
+      }
+    })
+})
 
 
 module.exports = router;
