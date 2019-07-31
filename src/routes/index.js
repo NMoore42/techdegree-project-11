@@ -27,9 +27,7 @@ router.post('/users', (req, res, next) => {
     } else {
       res.status(201)
       res.location('/')
-      res.json({
-          response: "Post Request Successful"
-      })
+      res.end()
     }
   })
 });
@@ -78,9 +76,7 @@ router.post('/courses', mid.authenticateUser, (req, res, next) => {
     } else {
       res.status(201)
       res.location('/')
-      res.json({
-          response: "Post Request Successful"
-      })
+      res.end()
     }
   })
 })
@@ -95,9 +91,7 @@ router.put('/courses/:courseId', mid.authenticateUser, (req, res, next) => {
         return next(err)
       } else {
         res.status(204)
-        res.json({
-            response: "Patch Request Successful"
-        })
+        res.end()
       }
     })
 });
@@ -129,9 +123,7 @@ router.post('/courses/:courseId/reviews', mid.authenticateUser, (req, res, next)
               } else {
                 res.status(201)
                 res.location('/')
-                res.json({
-                    response: "Post Request Successful"
-                })
+                res.end()
               }
             })
           }
