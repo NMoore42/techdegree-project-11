@@ -28,6 +28,9 @@ const db = mongoose.connection;
 //Mongoose error
 db.on('error', console.error.bind(console, 'connection error:'));
 
+//Database connect message
+db.once('open', () => console.log("Connection to database a success!"))
+
 // send a friendly greeting for the root route
 app.get('/', (req, res) => {
   res.json({
